@@ -31,8 +31,9 @@ func TestCloseChannel(t *testing.T) {
 			defer wg.Done()
 			<-start
 			for i := 0; i < steps; i++ {
-				if err := sj.Do(func() {
+				if err := sj.Do(func() error {
 					ch <- struct{}{}
+					return nil
 				}); err != nil {
 					atomic.AddUint64(&errCount, 1)
 				}

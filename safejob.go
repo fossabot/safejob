@@ -20,14 +20,13 @@ func New(closer func()) *safejob {
 	}
 }
 
-func (s *safejob) Do(f func()) error {
+func (s *safejob) Do(f func() error) error {
 	token := <-s.tokens
 	if token == nil {
 		return ErrClosed
 	}
 	defer token()
-	f()
-	return nil
+	return f()
 }
 
 func (s *safejob) Run(ctx context.Context) {
