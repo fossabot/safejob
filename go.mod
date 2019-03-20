@@ -1,4 +1,4 @@
-module safejob
+module github.com/jenchik/safejob
 
 go 1.12
 
