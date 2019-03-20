@@ -11,20 +11,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type testChan struct {
-	c chan struct{}
-}
-
-func (t *testChan) Close() error {
-	close(t.c)
-	return nil
-}
-
 func TestCloseChannel(t *testing.T) {
-	c := &testChan{
-		c: make(chan struct{}, 1000),
-	}
-	sj := New(c)
+	ch := make(chan struct{}, 1000)
+	sj := New(func() {
+		close(ch)
+	})
 	ctx, cancel := context.WithCancel(context.Background())
 	go sj.Run(ctx)
 
@@ -41,7 +32,7 @@ func TestCloseChannel(t *testing.T) {
 			<-start
 			for i := 0; i < steps; i++ {
 				if err := sj.Do(func() {
-					c.c <- struct{}{}
+					ch <- struct{}{}
 				}); err != nil {
 					atomic.AddUint64(&errCount, 1)
 				}
@@ -54,7 +45,7 @@ func TestCloseChannel(t *testing.T) {
 	n := 0
 	rand.Seed(time.Now().Unix())
 	stop := rand.Intn(jobCount * steps / 2)
-	for _ = range c.c {
+	for _ = range ch {
 		n++
 		if n == stop {
 			cancel()

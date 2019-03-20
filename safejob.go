@@ -3,20 +3,19 @@ package safejob
 import (
 	"context"
 	"errors"
-	"io"
 	"sync"
 )
 
 var ErrClosed = errors.New("unsuccessful attempt to perform work after stop")
 
 type safejob struct {
-	closer io.Closer
+	closer func()
 	tokens chan func()
 }
 
-func New(c io.Closer) *safejob {
+func New(closer func()) *safejob {
 	return &safejob{
-		closer: c,
+		closer: closer,
 		tokens: make(chan func()),
 	}
 }
@@ -40,7 +39,9 @@ func (s *safejob) Run(ctx context.Context) {
 			close(s.tokens)
 			wg.Done()
 			wg.Wait()
-			s.closer.Close()
+			if s.closer != nil {
+				s.closer()
+			}
 			return
 		case s.tokens <- wg.Done:
 			wg.Add(1)
